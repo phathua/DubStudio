@@ -8,6 +8,14 @@ src-tauri/target/
 *.tsbuildinfo
 exports/
 
+# Python cache & local test files
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+docs/local-*.md
+*.local.md
+
 # Local credentials; never commit API keys.
 .env
 .env.*
