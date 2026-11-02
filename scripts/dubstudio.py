@@ -8,7 +8,10 @@ import json
 from pathlib import Path
 import platform
 import shutil
+import subprocess
 import sys
+
+from asr import transcribe
 
 
 def create_project(video: Path, destination: Path, name: str) -> None:
@@ -40,9 +43,10 @@ def diagnose() -> dict:
         "ffprobe": bool(shutil.which("ffprobe")),
         "fasterWhisperInstalled": importlib.util.find_spec("faster_whisper") is not None,
         "demucsInstalled": importlib.util.find_spec("demucs") is not None,
-        "pipelineImplemented": False,
+        "asrAdapterImplemented": True,
         "note": "Detection does not verify models, compatibility, performance, or quality. "
-                "Separation, ASR, diarization, translation and TTS are not run by this CLI.",
+                "The transcribe command requires compatible ffmpeg, whisper-cli and a model. "
+                "This check does not perform inference.",
     }
 
 
@@ -54,16 +58,36 @@ def main() -> int:
     create.add_argument("output", type=Path)
     create.add_argument("--name", help="Project name (defaults to video filename)")
     sub.add_parser("diagnose", help="Report prerequisites; this does not run inference")
+    asr = sub.add_parser("transcribe", help="Run local whisper.cpp on an audio or video file")
+    asr.add_argument("source", type=Path, help="Input, preferably separated vocals")
+    asr.add_argument("output", type=Path, help="Output JSON; must not already exist")
+    asr.add_argument("--model", type=Path, help="Existing multilingual whisper.cpp model")
+    asr.add_argument("--download-model", action="store_true", help="Download the verified tiny multilingual model")
+    asr.add_argument("--language", default="auto", help="Language code or auto")
     args = parser.parse_args()
     try:
         if args.command == "import-video":
             create_project(args.video, args.output, args.name or args.video.stem)
             print(f"Created {args.output}. Import this .dub file in DubStudio to open it.")
             print("No AI processing has been performed.")
-        else:
+        elif args.command == "diagnose":
             print(json.dumps(diagnose(), indent=2))
+        else:
+            if not shutil.which("ffmpeg") or not shutil.which("whisper-cli"):
+                raise RuntimeError("Install ffmpeg and whisper-cli and make both available in PATH")
+            if bool(args.model) == bool(args.download_model):
+                raise ValueError("Specify exactly one of --model or --download-model")
+            if args.download_model:
+                from assets import prepare_asset
+                model = prepare_asset("whisper-tiny")
+            else:
+                model = args.model
+            transcript = transcribe(args.source, args.output, model, args.language)
+            print(f"Transcribed {len(transcript['segments'])} segments to {args.output}.")
+            print("Word timings are experimental; review against the audio. No separation or diarization was run.")
+            print("Timing diagnostics:", json.dumps(transcript["timingDiagnostics"]))
         return 0
-    except (OSError, ValueError) as exc:
+    except (OSError, ValueError, RuntimeError, subprocess.CalledProcessError) as exc:
         print(f"Error: {exc}", file=sys.stderr)
         return 1
 
