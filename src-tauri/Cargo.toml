@@ -1,0 +1,19 @@
+[package]
+name = "dubstudio"
+version = "0.1.0"
+description = "A home for your dubbing projects"
+authors = ["VixLab"]
+edition = "2021"
+
+[lib]
+name = "dubstudio_lib"
+crate-type = ["staticlib", "cdylib", "rlib"]
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+[dependencies]
+tauri = { version = "2", features = [] }
+tauri-plugin-dialog = "2"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+chrono = { version = "0.4", features = ["serde"] }
