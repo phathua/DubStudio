@@ -52,5 +52,54 @@ Python runtime and a local `htdemucs` model repository:
 python3 scripts/separate.py /path/to/audio.wav /path/to/new-output --model-repo /path/to/models --python /path/to/python
 ```
 
-It does not install Demucs or download model weights. The adapter has only been
-tested with a simulated process, so resource use and quality are not verified.
+It does not install Demucs or download model weights. The same Demucs model was
+also run manually on a 4-minute video on an M1 Mac; quality has not been validated
+and runtime or memory use may differ substantially on other inputs and hardware.
+
+For a local draft, `render.py` accepts a manifest containing `segments` with
+`start`, `end` and an absolute `audioPath` to each PCM WAV. It renders H.264
+480p video and AAC audio with FFmpeg. Speech is sped up by at most 1.35×, then
+trimmed to the time slot if it still does not fit; the JSON report identifies
+trimmed clips. These are rough timings, not lip sync.
+
+```sh
+python3 scripts/render.py source.mp4 voices/manifest.json preview.mp4 --backing no_vocals.wav --fallback-vocals vocals.wav
+```
+
+`--fallback-vocals` restores original speech in periods without dubbed clips;
+the separated backing may still contain residual speech. Without `--backing`,
+the original audio is reduced in volume, so original dialogue may still be
+audible throughout. The output path must not already exist.
+With both `--backing` and `--fallback-vocals`, separated vocals are kept outside
+the translated clips. Separation artifacts and abrupt transitions may be audible.
+
+`translate_batch.py` can instead translate groups of lines after explicit consent;
+it saves a `.partial` checkpoint beside the output so interrupted runs can resume
+with the same source and target language. The checkpoint contains transcript text.
+
+On macOS, an installed system voice can synthesize translated lines locally:
+
+```sh
+python3 scripts/tts.py translated.json /path/to/new-audio-directory --voice Linh
+```
+
+This produces WAV files and a manifest with measured durations and warnings for
+lines longer than their slots. It does not perform speaker detection, voice
+cloning, automatic time fitting, or video rendering. The `Linh` voice must be
+installed in macOS; other operating systems need a different TTS backend. A
+failed run may leave partial files in the new output directory.
+
+For an experimental local Vietnamese neural voice, install the external
+`vieneu` SDK (tested with 3.8.3, Python 3.11) in a separate environment and run:
+
+```sh
+python scripts/vieneu_tts.py translated.json /path/to/new-audio-directory \
+  --cache-dir /path/to/persistent-model-cache --voice 'Mai Anh' --download
+```
+
+`--download` explicitly allows missing model assets to be fetched on first use;
+omit it for offline reuse. The SDK and model assets are not bundled in the
+Tauri application. This experimental CLI does not yet verify or pin the files
+it downloads. Review the licenses of the model, codec, and voice assets before
+redistribution or commercial use. Synthesis uses one selected voice for all
+lines and does not detect speakers or automatically fit audio to the timeline.

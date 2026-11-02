@@ -21,6 +21,16 @@ React renders the interface. Rust owns project persistence and native commands; 
 
 Processing dependencies and model weights belong in a managed, versioned application data cache, not in the Tauri bundle. When a processing task needs a missing component, the future pipeline should select a compatible, licensed build for the OS and architecture, check disk space and verify its integrity before installing it. Downloads must be visible, cancellable, resumable where supported, and reusable across projects; failures must not be reported as successful processing. Hardware selection must use measured resource limits and language support, with a user override and a safe fallback. Downloading a runtime alone does not implement or validate an inference pipeline.
 
+### On-demand models and runtimes
+
+- [x] Experimental CLI can download and reuse one pinned Whisper tiny model outside the bundle, after size and SHA-256 verification. This does not install its inference runtime.
+- [ ] Add an application-managed cache outside the Tauri bundle, shared between projects. Download a model or a platform-specific runtime only when a user requests a task that requires it; reuse the verified cached version on subsequent runs, including offline when all dependencies are already present.
+- [ ] Before downloading, show the component, source, license, download size and required free disk space; show real progress, support cancellation and clean partial files. Pin versions and trusted hashes, verify before promoting a temporary download to the cache, and reject unsupported platforms or failed verification.
+- [ ] Add settings to inspect installed components and their disk use and remove unused model or runtime caches. Do not delete active components or the user's project/media files; report failures and allow downloading removed components again when needed.
+- [ ] Connect the model inventory to verified per-checkpoint metadata and measured compatibility. Unknown hardware, language or license information must remain unknown, not be presented as proof of compatibility; installation and execution are separate states from inclusion in the inventory.
+
+The inventory in [model-catalog.md](model-catalog.md) is a research list and does not itself download, install, or run models. Automatic runtime downloads, GUI cache management, cancellation and resume are future work, not current features.
+
 ## Milestones
 
 1. Validate workspace persistence and playback on macOS and Windows; improve timeline and missing-file recovery.

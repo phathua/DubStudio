@@ -32,6 +32,7 @@ import { filterProjects } from "./projects";
 import { words, resolveLanguage, type Text } from "./locale";
 import { Menu } from "./Menu";
 import { Workspace } from "./Workspace";
+import { VideoImport } from "./VideoImport";
 
 type Project = {
   version: number;
@@ -130,7 +131,7 @@ function App() {
   const [showPath, setShowPath] = useState(false);
   const [dialog, setDialog] = useState<"blank" | "video" | null>(null);
   const [name, setName] = useState("");
-  const [videoPath, setVideoPath] = useState<string | null>(null);
+
   const [notice, setNotice] = useState("");
   const [detail, setDetail] = useState<Recent | null>(null);
   const [failed, setFailed] = useState(false);
@@ -183,31 +184,6 @@ function App() {
       setNotice(String(e)),
     );
   };
-  const chooseVideo = async () => {
-    try {
-      const picked = await open({
-        multiple: false,
-        filters: [
-          {
-            name: "Video",
-            extensions: ["mp4", "mov", "mkv", "webm", "avi", "m4v"],
-          },
-        ],
-      });
-      if (typeof picked === "string") {
-        setVideoPath(picked);
-        setName(
-          picked
-            .split(/[\\/]/)
-            .pop()
-            ?.replace(/\.[^.]+$/, "") || "",
-        );
-        setDialog("video");
-      }
-    } catch (e) {
-      setNotice(String(e));
-    }
-  };
   const importProject = async () => {
     try {
       const path = await open({
@@ -233,7 +209,7 @@ function App() {
         await invoke("create_project", {
           path,
           name: name.trim(),
-          videoPath: dialog === "video" ? videoPath : null,
+          videoPath: null,
         }),
       );
       setDialog(null);
@@ -269,7 +245,6 @@ function App() {
             onClick={() => {
               close();
               setName("");
-              setVideoPath(null);
               setDialog("blank");
             }}
           >
@@ -285,7 +260,7 @@ function App() {
             className="menu-item"
             onClick={() => {
               close();
-              chooseVideo();
+              setDialog("video");
             }}
           >
             <span className="menu-icon">
@@ -654,7 +629,17 @@ function App() {
           )}
         </main>
       </div>
-      {dialog && (
+      {dialog === "video" && (
+        <VideoImport
+          language={language}
+          onClose={() => setDialog(null)}
+          onCreated={(path) => {
+            setDialog(null);
+            setWorkspace(path);
+          }}
+        />
+      )}
+      {dialog === "blank" && (
         <div className="overlay" onMouseDown={() => setDialog(null)}>
           <div
             className="modal"
@@ -664,10 +649,10 @@ function App() {
             onMouseDown={(e) => e.stopPropagation()}
           >
             <div className="modal-icon">
-              {dialog === "video" ? <Robot /> : <FilePlus2 />}
+              <FilePlus2 />
             </div>
-            <h2 id="dialog-title">{dialog === "video" ? t.video : t.blank}</h2>
-            <p>{dialog === "video" ? t.videoDesc : t.blankDesc}</p>
+            <h2 id="dialog-title">{t.blank}</h2>
+            <p>{t.blankDesc}</p>
             <label className="field">
               {t.projectName}
               <input
@@ -681,12 +666,6 @@ function App() {
                 placeholder={t.placeholder}
               />
             </label>
-            {videoPath && dialog === "video" && (
-              <div className="selected-file">
-                <Film size={16} />
-                <span>{videoPath.split(/[\\/]/).pop()}</span>
-              </div>
-            )}
             <div className="modal-actions">
               <button className="secondary" onClick={() => setDialog(null)}>
                 {t.cancel}
