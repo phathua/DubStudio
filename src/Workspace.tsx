@@ -19,7 +19,7 @@ import {
 } from "@phosphor-icons/react";
 import { Translate } from "./Translate";
 import { Menu } from "./Menu";
-import voices from "./voices.json";
+import voices from "./data/voices";
 import "./workspace.css";
 
 type Media = { id: string; path: string; kind: string };

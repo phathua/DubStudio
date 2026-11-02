@@ -1,4 +1,31 @@
-[
+/**
+ * Danh mục giọng đọc Text-to-Speech (TTS) đa mô hình của DubStudio.
+ * Tổng hợp 6 họ mô hình: VieNeu-TTS, Kokoro-82M, Piper TTS, CosyVoice 2, F5-TTS, GPT-SoVITS.
+ */
+
+export type VoiceGender = "male" | "female" | "multi" | "custom";
+export type VoiceType = "preset" | "cloning";
+export type TTSModelId = "vieneu" | "kokoro" | "piper" | "cosyvoice" | "f5-tts" | "gpt-sovits";
+
+export interface Voice {
+  id: string;
+  name: string;
+  model: string;
+  modelId: TTSModelId;
+  gender: VoiceGender;
+  genderLabel: "Nam" | "Nữ" | "Đa giọng" | "Tùy biến";
+  language: string;
+  languageLabel: string;
+  region?: string;
+  style?: string;
+  description: string;
+  type: VoiceType;
+  minRamGb: number;
+  minVramGb: number;
+  aliases?: string[];
+}
+
+export const VOICES: Voice[] = [
   {
     "id": "Hải Đăng",
     "name": "Hải Đăng",
@@ -2267,4 +2294,6 @@
     "minVramGb": 3.0,
     "aliases": []
   }
-]
+];
+
+export default VOICES;

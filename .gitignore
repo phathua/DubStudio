@@ -9,6 +9,7 @@ src-tauri/target/
 exports/
 
 # Python cache & local test files
+scripts/
 __pycache__/
 *.py[cod]
 *$py.class
