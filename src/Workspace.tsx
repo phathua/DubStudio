@@ -133,6 +133,150 @@ const id = () => crypto.randomUUID();
 const clamp = (value: number, min: number, max: number) =>
   Math.min(max, Math.max(min, value));
 
+function SpeakerVoiceSelector({
+  currentVoice,
+  language,
+  onSelect,
+}: {
+  currentVoice: string | null;
+  language: string;
+  onSelect: (voiceId: string | null) => void;
+}) {
+  const [selectedModel, setSelectedModel] = useState<string>("all");
+  const [search, setSearch] = useState("");
+
+  const activeVoice = voices.find((v) => v.id === currentVoice);
+
+  const modelOptions = [
+    { id: "all", label: language === "vi" ? "Tất cả" : "All" },
+    { id: "vieneu", label: "VieNeu" },
+    { id: "kokoro", label: "Kokoro" },
+    { id: "piper", label: "Piper" },
+    { id: "cosyvoice", label: "CosyVoice" },
+    { id: "f5-tts", label: "F5-TTS" },
+    { id: "gpt-sovits", label: "GPT-SoVITS" },
+  ];
+
+  const filteredVoices = voices.filter((v) => {
+    if (selectedModel !== "all" && v.modelId !== selectedModel) return false;
+    if (search.trim()) {
+      const q = search.toLowerCase();
+      const matchName =
+        v.name.toLowerCase().includes(q) || v.id.toLowerCase().includes(q);
+      const matchDesc = v.description.toLowerCase().includes(q);
+      const matchLang =
+        v.languageLabel.toLowerCase().includes(q) ||
+        v.language.toLowerCase().includes(q);
+      const matchModel = v.model.toLowerCase().includes(q);
+      if (!matchName && !matchDesc && !matchLang && !matchModel) return false;
+    }
+    return true;
+  });
+
+  const buttonLabel = activeVoice
+    ? `${activeVoice.name} · ${activeVoice.model.split(" ")[0]}`
+    : currentVoice ||
+      (language === "vi"
+        ? "Chọn giọng đọc (133 giọng)"
+        : "Choose a voice (133 voices)");
+
+  return (
+    <Menu
+      align="start"
+      trigger={
+        <button className="ws-voice-trigger" aria-label="Voice">
+          <span className="ws-voice-trigger-text">{buttonLabel}</span>
+          <CaretDown size={14} />
+        </button>
+      }
+    >
+      {(close) => (
+        <div className="ws-voice-menu">
+          <div className="ws-voice-header">
+            <input
+              type="text"
+              className="ws-voice-search"
+              placeholder={
+                language === "vi"
+                  ? "Tìm giọng, ngôn ngữ..."
+                  : "Search voice, language..."
+              }
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              onClick={(e) => e.stopPropagation()}
+              autoFocus
+            />
+            <div className="ws-voice-models">
+              {modelOptions.map((m) => (
+                <button
+                  key={m.id}
+                  type="button"
+                  className={`ws-voice-pill ${selectedModel === m.id ? "active" : ""}`}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setSelectedModel(m.id);
+                  }}
+                >
+                  {m.label}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div className="ws-voice-list">
+            <button
+              role="menuitem"
+              className="ws-voice-item ws-voice-unassign"
+              onClick={() => {
+                onSelect(null);
+                close();
+              }}
+            >
+              <strong>
+                {language === "vi" ? "Chưa chọn (Không gán giọng)" : "Unassigned"}
+              </strong>
+            </button>
+
+            {filteredVoices.length === 0 ? (
+              <p className="ws-voice-empty">
+                {language === "vi"
+                  ? "Không tìm thấy giọng phù hợp"
+                  : "No matching voices found"}
+              </p>
+            ) : (
+              filteredVoices.map((voice) => (
+                <button
+                  role="menuitem"
+                  key={voice.id}
+                  className={`ws-voice-item ${voice.id === currentVoice ? "selected" : ""}`}
+                  onClick={() => {
+                    onSelect(voice.id);
+                    close();
+                  }}
+                >
+                  <div className="ws-voice-row">
+                    <span className="ws-voice-name">{voice.name}</span>
+                    <span className="ws-voice-badge">{voice.modelId}</span>
+                    <span className={`ws-voice-gender ${voice.gender}`}>
+                      {voice.genderLabel}
+                    </span>
+                    <span className="ws-voice-hw">
+                      {voice.minVramGb === 0
+                        ? `CPU · ≥${voice.minRamGb}G`
+                        : `GPU ≥${voice.minVramGb}G`}
+                    </span>
+                  </div>
+                  <small className="ws-voice-desc">{voice.description}</small>
+                </button>
+              ))
+            )}
+          </div>
+        </div>
+      )}
+    </Menu>
+  );
+}
+
 export function Workspace({ path, language, onBack }: Props) {
   const t = messages[language];
   const [project, setProject] = useState<WorkspaceProject | null>(null);
@@ -548,55 +692,18 @@ export function Workspace({ path, language, onBack }: Props) {
                       <Trash size={16} />
                     </button>
                   </div>
-                  <Menu
-                    align="start"
-                    trigger={
-                      <button className="ws-voice-trigger" aria-label={t.voice}>
-                        {speaker.voice ||
-                          (language === "vi"
-                            ? "Chọn giọng VieNeu"
-                            : "Choose a VieNeu voice")}{" "}
-                        <CaretDown size={14} />
-                      </button>
+                  <SpeakerVoiceSelector
+                    currentVoice={speaker.voice}
+                    language={language}
+                    onSelect={(voiceId) =>
+                      change((p) => ({
+                        ...p,
+                        speakers: p.speakers.map((s) =>
+                          s.id === speaker.id ? { ...s, voice: voiceId } : s,
+                        ),
+                      }))
                     }
-                  >
-                    {(close) => (
-                      <div className="ws-voice-menu">
-                        <p>
-                          {language === "vi"
-                            ? "Giọng mẫu · chưa hỗ trợ phát thử"
-                            : "Preset voices · preview unavailable"}
-                        </p>
-                        {[
-                          {
-                            id: "",
-                            description:
-                              language === "vi" ? "Chưa chọn" : "Unassigned",
-                          },
-                          ...voices,
-                        ].map((voice) => (
-                          <button
-                            role="menuitem"
-                            key={voice.id}
-                            onClick={() => {
-                              change((p) => ({
-                                ...p,
-                                speakers: p.speakers.map((s) =>
-                                  s.id === speaker.id
-                                    ? { ...s, voice: voice.id || null }
-                                    : s,
-                                ),
-                              }));
-                              close();
-                            }}
-                          >
-                            <strong>{voice.id || voice.description}</strong>
-                            {voice.id && <small>{voice.description}</small>}
-                          </button>
-                        ))}
-                      </div>
-                    )}
-                  </Menu>
+                  />
                 </div>
               ))
             )}
