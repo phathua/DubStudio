@@ -1,0 +1,56 @@
+.translate-trigger {
+  background: transparent;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 6px 9px;
+  font-size: 11px;
+}
+.translate-trigger:hover {
+  background: var(--hover);
+}
+.translate-overlay {
+  z-index: 70;
+}
+.translate-modal {
+  max-height: calc(100vh - 40px);
+  overflow: auto;
+}
+.translate-modal .translate-preview {
+  max-height: 90px;
+  overflow: auto;
+  padding: 10px;
+  background: var(--soft);
+  border-radius: 6px;
+  color: var(--text);
+  overflow-wrap: anywhere;
+}
+.translate-modal fieldset {
+  border: 0;
+  margin: 12px 0;
+  padding: 0;
+}
+.translate-modal legend {
+  font-size: 12px;
+  font-weight: 700;
+  margin-bottom: 8px;
+}
+.translate-languages {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+}
+.translate-languages button {
+  padding: 5px 8px;
+  border-radius: 6px;
+  border: 1px solid var(--line);
+  background: var(--panel);
+  font-size: 11px;
+}
+.translate-languages button.chosen {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+.translate-modal .translate-error {
+  color: #d35a42;
+  margin: 8px 0;
+}

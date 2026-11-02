@@ -6,3 +6,8 @@ src-tauri/target/
 
 .pnpm-store/
 *.tsbuildinfo
+
+# Local credentials; never commit API keys.
+.env
+.env.*
+!.env.example

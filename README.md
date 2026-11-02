@@ -1,60 +1,48 @@
 <div align="center">
-  <img src="public/logo.png" alt="DubStudio logo" width="120" />
+  <img src="public/logo.png" alt="DubStudio logo" width="96" />
   <h1>DubStudio</h1>
-  <p>A little space for your big ideas.</p>
-  <p>Lightweight desktop project management, built for the future of dubbing.</p>
-  <p><strong>macOS · Windows · English · Tiếng Việt</strong></p>
+  <p>A desktop workspace for dubbing projects.</p>
+  <p>macOS · Windows · English · Tiếng Việt</p>
 </div>
 
-## What is DubStudio?
+[Tiếng Việt](README.vi.md)
 
-DubStudio is an open-source desktop foundation for organizing dubbing projects. Create a blank project, attach a video for future AI workflows, or bring an existing DubStudio project back into your recent list. Projects and settings stay on your computer.
+DubStudio is an open-source Tauri application for organizing dubbing projects. The current build provides a project workspace, media preview, editable speakers and dialogue, and optional online translation of an individual line with Google AI Studio.
 
-> **Current scope:** AI processing and project editing are not implemented yet. Videos are referenced at their original location, not copied into the project. Moving or deleting a video may break its reference.
-
-## Features
-
-- Real `.dubstudio` project files and a persistent recent-project list
-- Search, sort, grid and list views; clear warnings for missing files
-- English and Vietnamese, with light, dark and system appearance
-- Custom desktop windows, startup screen and adaptive menus
-- Tauri 2, Rust, React and TypeScript
+**Development status:** ASR, automatic speaker recognition, local translation, speech synthesis, source separation, timeline editing and video export are not implemented. The workspace timeline is a view of project content, not a full editor. See the [roadmap](docs/ROADMAP.md) and [model evaluation list](docs/MODELS.md).
 
 ## Getting started
 
-Prerequisites: Node.js 24, pnpm 11, Rust and the platform dependencies described in the [Tauri prerequisites](https://v2.tauri.app/start/prerequisites/). On macOS, install Xcode Command Line Tools. On Windows, install the required Microsoft C++ build tools and WebView2.
+Install Node.js 24, pnpm 11, Rust, and the [Tauri prerequisites](https://v2.tauri.app/start/prerequisites/) for your platform. Then run:
 
 ```sh
 pnpm install --frozen-lockfile
 pnpm tauri dev
 ```
 
-To produce a distributable for the current operating system:
+Alternatively, double-click `Dev.command` on macOS or `Dev.bat` on Windows. To build and install, use `Build and Install.command` or `Build and Install.bat`. The macOS script installs in `/Applications`; Windows builds an NSIS installer and runs it silently for the current user. Applications are not signed or notarized.
+
+## Google translation
+
+Translation is optional and sends the selected dialogue text to Google only after the user confirms. Google may use free-tier content to improve its products; quotas, availability and pricing can change. See [Google's pricing and terms](https://ai.google.dev/gemini-api/docs/pricing). DubStudio sets `store=false` on the Interactions API request.
+
+Set `GOOGLE_API_KEY` in the application process environment. During development only, the app also reads `GOOGLE_API_KEY` from a local `.env` file in the repository root if no environment variable is set. `.env` is ignored by Git but is plaintext: protect the file, do not share or publish it, and do not put the key in `VITE_` variables or frontend code. Production builds do not read `.env`; system keychain integration is planned. Never bundle a shared key in a public release.
+
+## Projects
+
+New `.dub` files contain versioned JSON with media references, speakers and editable dialogue. Media remains at its original location. Legacy `.dubstudio` files can be opened and saved to a new `.dub` file; the original is retained. Settings and recent projects live in the operating system's application-data directory.
+
+## Development and tests
 
 ```sh
+pnpm build
+pnpm test
+cargo test --manifest-path src-tauri/Cargo.toml
 pnpm tauri build
 ```
 
-The bundle is written under `src-tauri/target/release/bundle/`. Building a Windows installer requires Windows; building a macOS app requires macOS. Signing and notarization are not configured.
-
-## Development
-
-```sh
-pnpm build          # Type-check and build the interface
-pnpm test           # Interface logic tests
-cargo test --manifest-path src-tauri/Cargo.toml
-```
-
-`src/` contains the interface, translations and styles. `src-tauri/` contains the native application, project persistence, window configuration and icons. `public/` contains the shared logo. CI builds and tests on macOS and Windows.
-
-## Project files and privacy
-
-A `.dubstudio` file is versioned JSON containing the project name, creation/update dates and an optional absolute video path. Settings and recent-project references live in the operating system's application-data directory. Removing a project from the recent list does not delete its project or video file. Import accepts DubStudio project files only.
-
-## Contributing
-
-Issues and contributions are welcome. Please keep changes focused, run the checks above, and explain user-visible changes in your pull request. Do not include personal media, credentials or application data in contributions.
+`src/` contains the React interface; `src-tauri/` contains native project and translation code. Do not commit credentials, personal media, generated logs or model weights. Contributions should include relevant tests and accurately describe user-visible behavior.
 
 ## License
 
-[MIT](LICENSE). The supplied DubStudio logo is included as part of this repository.
+[MIT](LICENSE). Third-party models, voices, runtimes and media may have separate licenses.

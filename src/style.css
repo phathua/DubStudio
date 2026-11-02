@@ -118,11 +118,11 @@ button:disabled {
   flex: 1;
 }
 .sidebar {
-  width: 206px;
+  width: 180px;
   flex: none;
   background: var(--side);
   border-right: 1px solid var(--line);
-  padding: 37px 14px 20px;
+  padding: 24px 12px 18px;
   display: flex;
   flex-direction: column;
 }
@@ -131,7 +131,7 @@ button:disabled {
   letter-spacing: 0.18em;
   color: var(--muted);
   font-weight: 700;
-  margin: 0 12px 15px;
+  margin: 0 10px 10px;
 }
 .nav {
   display: flex;
@@ -142,7 +142,7 @@ button:disabled {
   border: 0;
   border-radius: 9px;
   background: transparent;
-  padding: 12px;
+  padding: 10px;
   color: var(--muted);
   font-size: 13px;
   font-weight: 600;
@@ -178,7 +178,7 @@ button:disabled {
   color: var(--muted);
 }
 .main {
-  padding: 54px 55px 48px;
+  padding: 32px 36px 36px;
   overflow: auto;
   flex: 1;
 }
@@ -205,10 +205,10 @@ button:disabled {
 }
 .heading h1 {
   font-family: Manrope, sans-serif;
-  font-size: 34px;
-  letter-spacing: -0.055em;
+  font-size: 28px;
+  letter-spacing: -0.045em;
   line-height: 1.15;
-  margin: 13px 0 9px;
+  margin: 8px 0 6px;
 }
 .heading-dot {
   color: #ed9264;
@@ -230,7 +230,8 @@ button:disabled {
   gap: 9px;
   font-weight: 700;
   font-size: 13px;
-  padding: 13px 16px;
+  min-height: 38px;
+  padding: 9px 13px;
   white-space: nowrap;
   box-shadow: 0 5px 12px #00000012;
 }
@@ -248,14 +249,14 @@ button:disabled {
 .divider {
   height: 1px;
   background: var(--line);
-  margin: 32px 0;
+  margin: 22px 0;
 }
 .section-head {
   display: flex;
   justify-content: space-between;
   align-items: center;
   gap: 16px;
-  margin-bottom: 23px;
+  margin-bottom: 16px;
 }
 .section-head h2 {
   font-family: Manrope, sans-serif;
@@ -413,7 +414,7 @@ button:disabled {
   color: #e36f59 !important;
 }
 .empty {
-  min-height: 340px;
+  min-height: 240px;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -422,15 +423,15 @@ button:disabled {
   border: 1px dashed var(--line);
   border-radius: 14px;
   background: var(--panel);
-  padding: 35px;
+  padding: 24px;
 }
 .empty-art {
   position: relative;
-  width: 100px;
-  height: 96px;
+  width: 76px;
+  height: 68px;
   display: grid;
   place-items: center;
-  margin-bottom: 14px;
+  margin-bottom: 10px;
 }
 .empty-orbit {
   position: absolute;
@@ -441,8 +442,8 @@ button:disabled {
 }
 .empty-icon {
   position: relative;
-  width: 60px;
-  height: 60px;
+  width: 50px;
+  height: 50px;
   display: grid;
   place-items: center;
   border-radius: 17px;
@@ -459,20 +460,20 @@ button:disabled {
 }
 .empty h3 {
   font-family: Manrope, sans-serif;
-  font-size: 17px;
-  margin: 0 0 8px;
+  font-size: 15px;
+  margin: 0 0 6px;
 }
 .empty p {
   font-size: 12px;
   color: var(--muted);
-  margin: 0 0 22px;
-  max-width: 310px;
+  margin: 0 0 14px;
+  max-width: 380px;
   line-height: 1.6;
 }
 .cards {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(205px, 1fr));
-  gap: 18px;
+  gap: 14px;
 }
 .card {
   position: relative;
@@ -498,7 +499,7 @@ button:disabled {
 }
 .card-art {
   position: relative;
-  height: 140px;
+  height: 115px;
   overflow: hidden;
   background: linear-gradient(145deg, #f1dfcb, #e9b19c);
   display: grid;
@@ -599,7 +600,7 @@ button:disabled {
   padding: 0 20px;
 }
 .setting-row {
-  min-height: 72px;
+  min-height: 60px;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -825,7 +826,7 @@ button:disabled {
 }
 @media (max-width: 950px) {
   .main {
-    padding: 40px 30px;
+    padding: 28px 26px;
   }
   .sidebar {
     width: 160px;
@@ -862,4 +863,41 @@ button:disabled {
   .heading h1 {
     font-size: 28px;
   }
+}
+
+/* macOS traffic-light controls; Windows keeps its controls on the right. */
+.titlebar.mac {
+  justify-content: flex-start;
+  gap: 12px;
+}
+.titlebar.mac .title-brand {
+  margin-left: 0;
+  pointer-events: none;
+}
+.titlebar.mac .window-actions {
+  align-items: center;
+  gap: 8px;
+  padding-left: 16px;
+}
+.titlebar.mac .window-actions button {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  padding: 0;
+  color: transparent;
+}
+.titlebar.mac .window-actions:hover button {
+  color: #3b2922;
+}
+.titlebar.mac .window-close,
+.titlebar.mac .window-close:hover {
+  background: #ff5f57;
+}
+.titlebar.mac .window-minimize,
+.titlebar.mac .window-minimize:hover {
+  background: #febc2e;
+}
+.titlebar.mac .window-maximize,
+.titlebar.mac .window-maximize:hover {
+  background: #28c840;
 }

@@ -4,30 +4,34 @@ import { invoke } from "@tauri-apps/api/core";
 import { getCurrentWindow } from "@tauri-apps/api/window";
 import { open, save } from "@tauri-apps/plugin-dialog";
 import {
-  ArrowDownUp,
-  ChevronDown,
-  CircleHelp,
-  Clapperboard,
-  FilePlus2,
-  Film,
+  IconContext,
+  ArrowsDownUp as ArrowDownUp,
+  ArrowsOutSimple,
+  CaretDown as ChevronDown,
+  Question as CircleHelp,
+  FilmSlate as Clapperboard,
+  FilePlus as FilePlus2,
+  FilmStrip as Film,
   FolderOpen,
-  Grid2X2,
-  Languages,
-  LayoutList,
+  SquaresFour as Grid2X2,
+  Translate as Languages,
+  ListBullets as LayoutList,
   Minus,
-  MoreHorizontal,
+  DotsThree as MoreHorizontal,
   Plus,
-  Search,
-  Settings2,
-  Sparkles,
+  MagnifyingGlass as Search,
+  SlidersHorizontal as Settings2,
+  Robot,
+  Sparkle,
   Square,
-  SunMoon,
+  SunDim as SunMoon,
   X,
-} from "lucide-react";
+} from "@phosphor-icons/react";
 import "./style.css";
 import { filterProjects } from "./projects";
-import { words, type Text } from "./locale";
+import { words, resolveLanguage, type Text } from "./locale";
 import { Menu } from "./Menu";
+import { Workspace } from "./Workspace";
 
 type Project = {
   version: number;
@@ -43,37 +47,81 @@ type Recent = {
   videoAvailable: boolean;
 };
 type Settings = { theme: string; language: string };
+const isMac = /Mac|iPhone|iPad/.test(navigator.platform);
 function Titlebar({ t }: { t: Text }) {
   const win = getCurrentWindow();
-  return (
-    <header className="titlebar" data-tauri-drag-region>
-      <div className="title-brand" data-tauri-drag-region>
-        <img src="/logo.png" /> <span data-tauri-drag-region>DubStudio</span>
-      </div>
-      <div className="window-actions">
-        <button aria-label={t.minimize} onClick={() => win.minimize()}>
-          <Minus size={15} />
-        </button>
-        <button aria-label={t.maximize} onClick={() => win.toggleMaximize()}>
-          <Square size={12} />
-        </button>
+  const toggleSize = async () => {
+    if (isMac) await win.setFullscreen(!(await win.isFullscreen()));
+    else await win.toggleMaximize();
+  };
+  const controls = (
+    <div className="window-actions">
+      {isMac && (
         <button
           className="window-close"
           aria-label={t.close}
+          title={t.close}
           onClick={() => win.close()}
         >
-          <X size={16} />
+          <X size={10} weight="bold" />
         </button>
+      )}
+      <button
+        className="window-minimize"
+        aria-label={t.minimize}
+        title={t.minimize}
+        onClick={() => win.minimize()}
+      >
+        <Minus size={isMac ? 10 : 15} weight="regular" />
+      </button>
+      <button
+        className="window-maximize"
+        aria-label={t.maximize}
+        title={t.maximize}
+        onClick={toggleSize}
+      >
+        {isMac ? (
+          <ArrowsOutSimple size={9} weight="bold" />
+        ) : (
+          <Square size={12} weight="regular" />
+        )}
+      </button>
+      {!isMac && (
+        <button
+          className="window-close"
+          aria-label={t.close}
+          title={t.close}
+          onClick={() => win.close()}
+        >
+          <X size={16} weight="regular" />
+        </button>
+      )}
+    </div>
+  );
+  return (
+    <header
+      className={`titlebar ${isMac ? "mac" : "windows"}`}
+      data-tauri-drag-region
+      onDoubleClick={(event) => {
+        if (event.target === event.currentTarget) void toggleSize();
+      }}
+    >
+      {isMac && controls}
+      <div className="title-brand" data-tauri-drag-region>
+        <img src="/logo.png" alt="" />{" "}
+        <span data-tauri-drag-region>DubStudio</span>
       </div>
+      {!isMac && controls}
     </header>
   );
 }
 function App() {
   const [settings, setSettings] = useState<Settings>({
     theme: "system",
-    language: "en",
+    language: "system",
   });
   const [recent, setRecent] = useState<Recent[]>([]);
+  const [workspace, setWorkspace] = useState<string | null>(null);
   const [ready, setReady] = useState(false);
   const [page, setPage] = useState<"projects" | "settings">("projects");
   const [query, setQuery] = useState("");
@@ -87,7 +135,8 @@ function App() {
   const [detail, setDetail] = useState<Recent | null>(null);
   const [failed, setFailed] = useState(false);
   const searchRef = useRef<HTMLInputElement>(null);
-  const t = words[settings.language === "vi" ? "vi" : "en"];
+  const language = resolveLanguage(settings.language, navigator.languages);
+  const t = words[language];
   useEffect(() => {
     invoke<[Settings, Recent[]]>("load_data")
       .then(([s, r]) => {
@@ -114,7 +163,7 @@ function App() {
           : settings.theme);
     apply();
     media.addEventListener("change", apply);
-    document.documentElement.lang = settings.language;
+    document.documentElement.lang = language;
     return () => media.removeEventListener("change", apply);
   }, [settings]);
   useEffect(() => {
@@ -163,11 +212,11 @@ function App() {
     try {
       const path = await open({
         multiple: false,
-        filters: [{ name: "DubStudio", extensions: ["dubstudio"] }],
+        filters: [{ name: "DubStudio", extensions: ["dub", "dubstudio"] }],
       });
       if (typeof path === "string") {
         setRecent(await invoke("import_project", { path }));
-        setNotice(t.imported);
+        setWorkspace(path);
       }
     } catch (e) {
       setNotice(`${t.importFailed}: ${String(e)}`);
@@ -176,8 +225,8 @@ function App() {
   const createProject = async () => {
     try {
       const path = await save({
-        defaultPath: `${name.trim().replace(/[\\/:*?"<>|]/g, "-")}.dubstudio`,
-        filters: [{ name: "DubStudio", extensions: ["dubstudio"] }],
+        defaultPath: `${name.trim().replace(/[\\/:*?"<>|]/g, "-")}.dub`,
+        filters: [{ name: "DubStudio", extensions: ["dub"] }],
       });
       if (!path) return;
       setRecent(
@@ -188,7 +237,7 @@ function App() {
         }),
       );
       setDialog(null);
-      setNotice(dialog === "video" ? t.videoReady : t.created);
+      setWorkspace(path);
     } catch (e) {
       setNotice(String(e));
     }
@@ -240,7 +289,7 @@ function App() {
             }}
           >
             <span className="menu-icon">
-              <Sparkles size={19} />
+              <Robot size={19} />
             </span>
             <span>
               <b>{t.video}</b>
@@ -267,13 +316,29 @@ function App() {
     </Menu>
   );
   if (!ready) return null;
+  if (workspace)
+    return (
+      <div className="app">
+        <Titlebar t={t} />
+        <Workspace
+          path={workspace}
+          language={language}
+          onBack={() => {
+            setWorkspace(null);
+            invoke<[Settings, Recent[]]>("load_data")
+              .then(([, items]) => setRecent(items))
+              .catch((e) => setNotice(String(e)));
+          }}
+        />
+      </div>
+    );
   return (
     <div className="app">
       <Titlebar t={t} />
       <div className="shell">
         <aside className="sidebar">
           <div className="side-label">
-            {settings.language === "vi" ? "KHÔNG GIAN" : "WORKSPACE"}
+            {language === "vi" ? "KHÔNG GIAN" : "WORKSPACE"}
           </div>
           <button
             className={`nav ${page === "projects" ? "active" : ""}`}
@@ -291,11 +356,9 @@ function App() {
           </button>
           <div className="side-bottom">
             <div className="side-mark">
-              <Sparkles size={16} />
+              <Clapperboard size={16} />
               <span>
-                {settings.language === "vi"
-                  ? "DÀNH CHO CÂU CHUYỆN"
-                  : "MADE FOR STORIES"}
+                {language === "vi" ? "DÀNH CHO CÂU CHUYỆN" : "MADE FOR STORIES"}
               </span>
             </div>
             <span className="version">DubStudio · 0.1.0</span>
@@ -308,7 +371,7 @@ function App() {
                 <div>
                   <div className="eyebrow">
                     <span />{" "}
-                    {settings.language === "vi"
+                    {language === "vi"
                       ? "KHÔNG GIAN SÁNG TẠO"
                       : "YOUR CREATIVE SPACE"}
                   </div>
@@ -399,7 +462,7 @@ function App() {
                       <div className="empty-icon">
                         <Clapperboard size={32} />
                       </div>
-                      <Sparkles className="empty-spark" size={19} />
+                      <Sparkle className="empty-spark" size={19} />
                     </div>
                     <h3>{recent.length ? t.noResults : t.emptyTitle}</h3>
                     <p>{recent.length ? t.noResultsDesc : t.emptyDesc}</p>
@@ -411,7 +474,11 @@ function App() {
                       <article key={item.path} className="card">
                         <button
                           className="card-open"
-                          onClick={() => setDetail(item)}
+                          onClick={() =>
+                            item.available
+                              ? setWorkspace(item.path)
+                              : setDetail(item)
+                          }
                         >
                           <div
                             className={`card-art ${item.project.videoPath ? "video-art" : ""}`}
@@ -432,7 +499,7 @@ function App() {
                             <div>
                               <h3>{item.project.name}</h3>
                               <p>
-                                {new Intl.DateTimeFormat(settings.language, {
+                                {new Intl.DateTimeFormat(language, {
                                   dateStyle: "medium",
                                 }).format(new Date(item.project.updatedAt))}
                               </p>
@@ -486,7 +553,7 @@ function App() {
                 <div>
                   <div className="eyebrow">
                     <span />{" "}
-                    {settings.language === "vi"
+                    {language === "vi"
                       ? "KHÔNG GIAN SÁNG TẠO"
                       : "YOUR CREATIVE SPACE"}
                   </div>
@@ -539,7 +606,11 @@ function App() {
                   <Menu
                     trigger={
                       <button className="sort">
-                        {settings.language === "vi" ? "Tiếng Việt" : "English"}
+                        {settings.language === "system"
+                          ? t.system
+                          : language === "vi"
+                            ? "Tiếng Việt"
+                            : "English"}
                         <ChevronDown size={14} />
                       </button>
                     }
@@ -547,6 +618,7 @@ function App() {
                     {(close) => (
                       <>
                         {[
+                          ["system", t.system],
                           ["en", "English"],
                           ["vi", "Tiếng Việt"],
                         ].map(([v, label]) => (
@@ -592,7 +664,7 @@ function App() {
             onMouseDown={(e) => e.stopPropagation()}
           >
             <div className="modal-icon">
-              {dialog === "video" ? <Sparkles /> : <FilePlus2 />}
+              {dialog === "video" ? <Robot /> : <FilePlus2 />}
             </div>
             <h2 id="dialog-title">{dialog === "video" ? t.video : t.blank}</h2>
             <p>{dialog === "video" ? t.videoDesc : t.blankDesc}</p>
@@ -679,10 +751,14 @@ function App() {
   );
 }
 function Splash() {
-  const [language, setLanguage] = useState("en");
+  const [language, setLanguage] = useState(() =>
+    resolveLanguage("system", navigator.languages),
+  );
   useEffect(() => {
     invoke<[Settings, Recent[]]>("load_data")
-      .then(([s]) => setLanguage(s.language))
+      .then(([s]) =>
+        setLanguage(resolveLanguage(s.language, navigator.languages)),
+      )
       .catch(() => {});
   }, []);
   return (
@@ -701,5 +777,7 @@ function Splash() {
   );
 }
 createRoot(document.getElementById("root")!).render(
-  new URLSearchParams(location.search).has("splash") ? <Splash /> : <App />,
+  <IconContext.Provider value={{ weight: "duotone" }}>
+    {new URLSearchParams(location.search).has("splash") ? <Splash /> : <App />}
+  </IconContext.Provider>,
 );

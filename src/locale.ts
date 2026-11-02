@@ -1,3 +1,12 @@
+export function resolveLanguage(
+  preference: string,
+  languages: readonly string[],
+): "en" | "vi" {
+  if (preference === "vi" || preference === "en") return preference;
+  const primary = languages[0]?.toLowerCase().split(/[-_]/)[0];
+  return primary === "vi" ? "vi" : "en";
+}
+
 export const words = {
   en: {
     home: "Your projects",
