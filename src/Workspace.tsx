@@ -19,6 +19,7 @@ import {
 } from "@phosphor-icons/react";
 import { Translate } from "./Translate";
 import { Menu } from "./Menu";
+import voices from "./voices.json";
 import "./workspace.css";
 
 type Media = { id: string; path: string; kind: string };
@@ -547,21 +548,55 @@ export function Workspace({ path, language, onBack }: Props) {
                       <Trash size={16} />
                     </button>
                   </div>
-                  <input
-                    aria-label={t.voice}
-                    placeholder={t.voicePlaceholder}
-                    value={speaker.voice || ""}
-                    onChange={(e) =>
-                      change((p) => ({
-                        ...p,
-                        speakers: p.speakers.map((s) =>
-                          s.id === speaker.id
-                            ? { ...s, voice: e.target.value || null }
-                            : s,
-                        ),
-                      }))
+                  <Menu
+                    align="start"
+                    trigger={
+                      <button className="ws-voice-trigger" aria-label={t.voice}>
+                        {speaker.voice ||
+                          (language === "vi"
+                            ? "Chọn giọng VieNeu"
+                            : "Choose a VieNeu voice")}{" "}
+                        <CaretDown size={14} />
+                      </button>
                     }
-                  />
+                  >
+                    {(close) => (
+                      <div className="ws-voice-menu">
+                        <p>
+                          {language === "vi"
+                            ? "Giọng mẫu · chưa hỗ trợ phát thử"
+                            : "Preset voices · preview unavailable"}
+                        </p>
+                        {[
+                          {
+                            id: "",
+                            description:
+                              language === "vi" ? "Chưa chọn" : "Unassigned",
+                          },
+                          ...voices,
+                        ].map((voice) => (
+                          <button
+                            role="menuitem"
+                            key={voice.id}
+                            onClick={() => {
+                              change((p) => ({
+                                ...p,
+                                speakers: p.speakers.map((s) =>
+                                  s.id === speaker.id
+                                    ? { ...s, voice: voice.id || null }
+                                    : s,
+                                ),
+                              }));
+                              close();
+                            }}
+                          >
+                            <strong>{voice.id || voice.description}</strong>
+                            {voice.id && <small>{voice.description}</small>}
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </Menu>
                 </div>
               ))
             )}
